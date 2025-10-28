@@ -1,129 +1,125 @@
-Skip to main content
-Google Classroom
-Classroom
-BTech-SE-5C-2025
-5C
-Home
-Calendar
-Gemini
-Enrolled
-To-do
-D
-DBMS-VA
-C
-D
-DBMS-LAB
-F & C
-B
-BTech-SE-5C-2025
-5C
-U
-UE23CS252B-1: CN
-C
-Archived classes
-Settings
-Material details
-Labs
-RADHIKA M HIRANNAIAH PESU RR CSE STAFF
-•
-Aug 20 (Edited Yesterday)
-
-Lab_1_RequirementEngineering_student_handout.pdf
-PDF
-
-Lab 1 - Requirements/UML
-Google Forms
-
-Lab_2_Jira_Student_Handout.pdf
-PDF
-
-Lab 2 - Jira
-Google Forms
-
-Lab_3_Architecture_Student_handout.pdf
-PDF
-
-Lab 3: Component Modelling and Architecture Pattern
-Google Forms
-
-Lab_4_VibeCoding_Handout.pdf
-PDF
-
-Lab 4 - Vibe Coding
-Google Forms
-
-Lab_5_Static_code_analysis_Student_handout.pdf
-PDF
-
-inventory_system.py
-Text
-
-Lab 5: Static Code Analysis
-Google Forms
-Class comments
-
-Add class comment…
+"""Inventory System Module
+Provides functions to manage item stock information and demonstrates
+basic inventory operations such as add, remove, and reporting.
+"""
 
 import json
-import logging
 from datetime import datetime
 
-# Global variable
 stock_data = {}
 
-def addItem(item="default", qty=0, logs=[]):
-    if not item:
-        return
-    stock_data[item] = stock_data.get(item, 0) + qty
-    logs.append("%s: Added %d of %s" % (str(datetime.now()), qty, item))
 
-def removeItem(item, qty):
+def add_item(item="default", qty=0, logs=None):
+    """Add a positive quantity of an item to stock_data and log the event.
+
+    Args:
+        item (str): Name of the item to add.
+        qty (int): Quantity to add (must be positive).
+        logs (list, optional): Log list to record the operation.
+    """
+    if logs is None:
+        logs = []
+    if not isinstance(item, str) or not item:
+        return
+    if not isinstance(qty, int) or qty <= 0:
+        return  # Only allow positive quantities
+    stock_data[item] = stock_data.get(item, 0) + qty
+    logs.append(f"{datetime.now()}: Added {qty} of {item}")
+
+
+def remove_item(item, qty):
+    """Remove a positive quantity of an item from stock_data, delete if zero or negative.
+
+    Args:
+        item (str): Name of the item to remove.
+        qty (int): Quantity to remove (must be positive).
+    """
+    if not isinstance(qty, int) or qty <= 0:
+        return  # Only allow positive removals
     try:
         stock_data[item] -= qty
         if stock_data[item] <= 0:
             del stock_data[item]
-    except:
+    except KeyError:
         pass
 
-def getQty(item):
-    return stock_data[item]
 
-def loadData(file="inventory.json"):
-    f = open(file, "r")
-    global stock_data
-    stock_data = json.loads(f.read())
-    f.close()
+def get_qty(item):
+    """Return the quantity of the given item in stock_data.
 
-def saveData(file="inventory.json"):
-    f = open(file, "w")
-    f.write(json.dumps(stock_data))
-    f.close()
+    Args:
+        item (str): Item name to query.
 
-def printData():
+    Returns:
+        int: Quantity of the item, or 0 if not found.
+    """
+    return stock_data.get(item, 0)
+
+
+def load_data(file="inventory.json"):
+    """Load stock_data from JSON file and update the global variable.
+
+    Args:
+        file (str): Filename to load from.
+
+    Returns:
+        dict: Updated stock_data.
+    """
+    try:
+        with open(file, "r", encoding="utf-8") as f:
+            loaded = json.load(f)
+    except FileNotFoundError:
+        return stock_data
+    if isinstance(loaded, dict):
+        stock_data.clear()
+        stock_data.update(loaded)
+    return stock_data
+
+
+def save_data(file="inventory.json"):
+    """Save stock_data to JSON file using safe open and encoding.
+
+    Args:
+        file (str): Filename to save into.
+    """
+    with open(file, "w", encoding="utf-8") as f:
+        json.dump(stock_data, f, ensure_ascii=False)
+
+
+def print_data():
+    """Print a report of current items and quantities in stock_data."""
     print("Items Report")
-    for i in stock_data:
-        print(i, "->", stock_data[i])
+    for item, quantity in stock_data.items():
+        print(f"{item} -> {quantity}")
 
-def checkLowItems(threshold=5):
-    result = []
-    for i in stock_data:
-        if stock_data[i] < threshold:
-            result.append(i)
-    return result
+
+def check_low_items(threshold=5):
+    """Return a list of items whose quantity falls below the threshold.
+
+    Args:
+        threshold (int): Quantity threshold.
+
+    Returns:
+        list: Items with quantity below threshold.
+    """
+    return [item for item, quantity in stock_data.items() if quantity < threshold]
+
 
 def main():
-    addItem("apple", 10)
-    addItem("banana", -2)
-    addItem(123, "ten")  # invalid types, no check
-    removeItem("apple", 3)
-    removeItem("orange", 1)
-    print("Apple stock:", getQty("apple"))
-    print("Low items:", checkLowItems())
-    saveData()
-    loadData()
-    printData()
-    eval("print('eval used')")  # dangerous
+    """Main function to demonstrate inventory system functionality."""
+    logs = []
+    add_item("apple", 10, logs)
+    add_item("banana", 2, logs)  # Correct positive quantity
+    add_item("grape", 7, logs)
+    remove_item("apple", 3)
+    remove_item("orange", 1)  # 'orange' does not exist, should not crash
+    print("Apple stock:", get_qty("apple"))
+    print("Low items:", check_low_items())
+    save_data()
+    load_data()
+    print_data()
+    # eval removed for safety
 
-main()
-inventory_system.py
-Displaying inventory_system.py.
+
+if __name__ == "__main__":
+    main()
